@@ -1,59 +1,38 @@
-<!DOCTYPE html>
-<html lang="uk">
-<head>
-    <meta charset="UTF-8">
-    <title>{{ title }}</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
-</head>
-<body>
-    <nav class="container">
-        <ul>
-            <li><strong>🎸 TicketShow</strong></li>
-        </ul>
-       <ul>
-    <li><a href="/">Каталог</a></li>
-    {% if user_id %}
-        <li><a href="/auth/dashboard" class="secondary">Мій Кабінет</a></li>
-        <li><a href="/auth/logout" class="outline" role="button">Вийти</a></li>
+{% extends "base.html" %}
+
+{% block title %}Каталог концертів - Ticket Booking{% endblock %}
+
+{% block content %}
+<header style="margin-bottom: 40px;">
+    <h1>Доступні концерти</h1>
+    <p style="color: #aaaaaa;">Знайдіть свій улюблений захід та забронюйте найкращі місця.</p>
+</header>
+
+<div style="margin-bottom: 30px; display: flex; gap: 10px;">
+    <a href="/concerts" class="btn" style="background-color: {% if not selected_genre %}#6200ee{% else %}#2c2c2c{% endif %}; padding: 8px 16px; font-size: 0.9rem;">Всі жанри</a>
+    <a href="/concerts?genre=Rock" class="btn" style="background-color: {% if selected_genre == 'Rock' %}#6200ee{% else %}#2c2c2c{% endif %}; padding: 8px 16px; font-size: 0.9rem;">Рок</a>
+    <a href="/concerts?genre=Pop" class="btn" style="background-color: {% if selected_genre == 'Pop' %}#6200ee{% else %}#2c2c2c{% endif %}; padding: 8px 16px; font-size: 0.9rem;">Поп</a>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 15px;">
+    {% for concert in concerts %}
+    <div class="concert-card">
+        <div class="concert-info">
+            <span style="font-size: 0.85rem; color: #03dac6; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">{{ concert.genre }}</span>
+            <h3 style="margin: 5px 0 10px 0;">{{ concert.title }}</h3>
+            <div class="concert-meta">
+                <p style="margin: 3px 0;">🎙️ <strong>Виконавець:</strong> {{ concert.artist }}</p>
+                <p style="margin: 3px 0;">📍 <strong>Локація:</strong> {{ concert.location }}</p>
+                <p style="margin: 3px 0;">📅 <strong>Дата:</strong> {{ concert.date_time }}</p>
+            </div>
+        </div>
+        <div style="text-align: right; min-width: 150px;">
+            <div style="font-size: 1.2rem; font-weight: bold; color: #ffffff; margin-bottom: 10px;">{{ concert.base_price }} грн</div>
+            <a href="/concert/{{ concert.id }}/seats" class="btn" style="padding: 10px 20px; font-size: 0.9rem; width: 100%; box-sizing: border-box;">Вибрати місце</a>
+        </div>
+    </div>
     {% else %}
-        <li><a href="/auth/login" class="outline" role="button">Увійти</a></li>
-    {% endif %}
-</ul>
-    </nav>
-
-    <main class="container">
-        <header>
-            <h1>Доступні концерти</h1>
-            <p>Знайдіть свій улюблений захід та забронюйте найкращі місця.</p>
-        </header>
-
-        <div style="margin-bottom: 30px;">
-            <a href="/" class="button {% if selected_genre %}secondary{% endif %}">Всі жанри</a>
-            <a href="/?genre=Rock" class="button {% if selected_genre != 'Rock' %}secondary{% endif %}">Рок</a>
-            <a href="/?genre=Pop" class="button {% if selected_genre != 'Pop' %}secondary{% endif %}">Поп</a>
-        </div>
-
-        <div class="grid">
-            {% for concert in concerts %}
-            <article>
-                <header>
-                    <strong>{{ concert.artist }}</strong>
-                </header>
-                <h3>{{ concert.title }}</h3>
-                <p>📍 Місце: {{ concert.location }}</p>
-                <p>📅 Дата: {{ concert.date_time }}</p>
-                <p>🏷️ Жанр: <mark>{{ concert.genre }}</mark></p>
-                <footer>
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span>Ціна від: <strong>{{ concert.base_price }} грн</strong></span>
-                        <a href="/concert/{{ concert.id }}" role="button">Обрати місце</a>
-                    </div>
-                </footer>
-            </article>
-            {% else %}
-                <p>Наразі активних концертів у цьому жанрі немає. Завітайте пізніше!</p>
-            {% endfor %}
-        </div>
-    </main>
-</body>
-</html>
+        <p style="color: #aaaaaa; font-style: italic; text-align: center; margin-top: 5px;">Наразі активних концертів немає. Завітайте пізніше!</p>
+    {% endfor %}
+</div>
+{% endblock %}

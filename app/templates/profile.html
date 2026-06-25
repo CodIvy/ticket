@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Особистий кабінет - Ticket Booking{% endblock %}
+
+{% block content %}
+<article style="background: #252525; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+    <header style="border-bottom: 1px solid #333333; padding-bottom: 15px; margin-bottom: 25px;">
+        <h2 style="margin: 0 0 10px 0;">👋 Вітаємо в особистому кабінеті!</h2>
+        <p style="color: #aaaaaa; margin: 0;">Ваш акаунт: <strong style="color: #ffffff;">{{ user.email }}</strong></p>
+    </header>
+
+    <h3 style="margin-bottom: 20px;">📜 Історія ваших покупок</h3>
+
+    {% if history %}
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead>
+                    <tr style="background: #333333; color: #ffffff;">
+                        <th style="padding: 12px; border-radius: 4px 0 0 4px;">№</th>
+                        <th style="padding: 12px;">Захід / Виконавець</th>
+                        <th style="padding: 12px;">Місце</th>
+                        <th style="padding: 12px;">Сума</th>
+                        <th style="padding: 12px; border-radius: 0 4px 4px 0;">Дата купівлі</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in history %}
+                    <tr style="border-bottom: 1px solid #333333; transition: background 0.2s;">
+                        <td style="padding: 12px; color: #aaaaaa;">#{{ item.order_id }}</td>
+                        <td style="padding: 12px;">
+                            <strong style="color: #ffffff;">{{ item.concert_title }}</strong><br>
+                            <span style="font-size: 0.85rem; color: #aaaaaa;">🎙️ {{ item.artist }} — 📅 {{ item.date }}</span>
+                        </td>
+                        <td style="padding: 12px;">
+                            <span style="background: #6200ee; color: #ffffff; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: bold;">
+                                Ряд {{ item.row }}, Місце {{ item.seat }}
+                            </span>
+                        </td>
+                        <td style="padding: 12px; color: #03dac6; font-weight: bold;">{{ item.amount }} грн</td>
+                        <td style="padding: 12px; font-size: 0.9rem; color: #aaaaaa;">{{ item.purchased_at }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div style="padding: 40px; text-align: center; background: #1e1e1e; border: 1px dashed #444444; border-radius: 6px;">
+            <p style="color: #aaaaaa; font-style: italic; margin-bottom: 20px;">Ви ще не придбали жодного квитка.</p>
+            <a href="/concerts" class="btn" style="padding: 10px 20px; font-size: 0.9rem;">Перейти до каталогу</a>
+        </div>
+    {% endif %}
+</article>
+{% endblock %}

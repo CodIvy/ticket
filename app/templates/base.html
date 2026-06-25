@@ -3,25 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }}</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <title>{% block title %}Ticket Booking{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
 </head>
 <body>
-    <nav class="container">
-        <ul>
-            <li><strong>Concert Tickets</strong></li>
-        </ul>
-        <ul>
-            <li><a href="/">Каталог</a></li>
-            <li><a href="#" class="outline" role="button">Увійти</a></li>
-        </ul>
-    </nav>
+    <div class="container">
+        <nav style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid #333333;">
+            <ul>
+                <li style="list-style: none;"><a href="/concerts" style="font-size: 1.5rem; font-weight: bold; color: #ffffff;">Concert Tickets</a></li>
+            </ul>
+            <ul style="display: flex; align-items: center; gap: 15px; list-style: none; margin: 0; padding: 0;">
+                <li><a href="/concerts">Каталог</a></li>
+                {% if request.cookies.get("user_id") %}
+                    <li><a href="/auth/profile" style="color: #03dac6; font-weight: bold;">Мій Кабінет</a></li>
+                    <li><a href="/auth/logout" style="color: #cf6679;">Вихід</a></li>
+                {% else %}
+                    <li><a href="/auth/login" class="btn" style="padding: 8px 16px; font-size: 0.9rem;">Увійти</a></li>
+                {% endif %}
+            </ul>
+        </nav>
 
-    <main class="container">
-        <header>
-            <h1>{{ message }}</h1>
-            <p>Тут з'явиться список доступних концертів, фільтрація та інтерактивний вибір місць.</p>
-        </header>
-    </main>
+        <main>
+            {% block content %}
+            {% endblock %}
+        </main>
+    </div>
 </body>
 </html>

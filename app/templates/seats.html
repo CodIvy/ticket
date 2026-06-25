@@ -1,40 +1,44 @@
-<!DOCTYPE html>
-<html lang="uk">
-<head>
-    <meta charset="UTF-8">
-    <title>Вибір місця</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-</head>
-<body>
-    <div class="container">
-        <h1>Виберіть місце на концерт</h1>
-        <a href="/concerts">← Повернутися до каталогу</a>
-        <br><br>
+{% extends "base.html" %}
 
-        <div class="screen">СЦЕНА</div>
+{% block title %}Вибір місця - Ticket Booking{% endblock %}
 
-        <div class="grid">
-            {% for seat in seats %}
-                {% if seat.status.value == "FREE" %}
-                    <form action="/concert/book" method="POST" style="margin: 0;">
-                        <input type="hidden" name="seat_id" value="{{ seat.id }}">
-                        <button type="submit" class="seat-btn seat-FREE" title="Ряд {{ seat.row_number }}, Місце {{ seat.seat_number }}">
-                            Р{{ seat.row_number }}-М{{ seat.seat_number }}
-                        </button>
-                    </form>
-                {% else %}
-                    <button class="seat-btn seat-{{ seat.status.value }}" disabled>
-                        Р{{ seat.row_number }}-М{{ seat.seat_number }}
-                    </button>
-                {% endif %}
-            {% endfor %}
-        </div>
+{% block content %}
+<div style="margin-bottom: 25px;">
+    <h1>Виберіть місце на концерт</h1>
+    <a href="/concerts" style="color: #03dac6; font-weight: bold;">← Повернутися до каталогу</a>
+</div>
 
-        <div style="display: flex; gap: 20px; justify-content: center;">
-            <div><span style="display:inline-block; width:15px; height:15px; background:#03_dac6; border-radius:3px;"></span> Вільне</div>
-            <div><span style="display:inline-block; width:15px; height:15px; background:#ff_b74d; border-radius:3px;"></span> Заброньовано</div>
-            <div><span style="display:inline-block; width:15px; height:15px; background:#cf_6679; border-radius:3px;"></span> Куплено</div>
-        </div>
+<div class="screen">СЦЕНА</div>
+
+<div class="grid">
+    {% for seat in seats %}
+        {% if seat.status == "FREE" %}
+            <form action="/concert/book" method="POST" style="margin: 0;">
+                <input type="hidden" name="seat_id" value="{{ seat.id }}">
+                <button type="submit" class="seat-btn seat-FREE" title="Ряд {{ seat.row_number }}, Місце {{ seat.seat_number }}">
+                    Р{{ seat.row_number }}-М{{ seat.seat_number }}
+                </button>
+            </form>
+        {% else %}
+            <button class="seat-btn seat-{{ seat.status }}" disabled title="Ряд {{ seat.row_number }}, Місце {{ seat.seat_number }}">
+                Р{{ seat.row_number }}-М{{ seat.seat_number }}
+            </button>
+        {% endif %}
+    {% endfor %}
+</div>
+
+<div style="display: flex; gap: 25px; justify-content: center; margin-top: 40px; padding: 15px; background: #252525; border-radius: 6px;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="display:inline-block; width:16px; height:16px; background:#03dac6; border-radius:4px;"></span> 
+        <span>Вільне</span>
     </div>
-</body>
-</html>
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="display:inline-block; width:16px; height:16px; background:#ffb74d; border-radius:4px;"></span> 
+        <span>Заброньовано</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="display:inline-block; width:16px; height:16px; background:#cf6679; border-radius:4px;"></span>
+        <span>Куплено</span>
+    </div>
+</div>
+{% endblock %}

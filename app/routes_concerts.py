@@ -42,7 +42,7 @@ async def list_concerts(request: Request, db: AsyncSession = Depends(get_db)):
 
     return templates.TemplateResponse(
         request=request,
-        name="concerts.html",
+        name="catalog.html",
         context={"concerts": concerts_data}
     )
 

@@ -1,35 +1,33 @@
-<!DOCTYPE html>
-<html lang="uk">
-<head>
-    <meta charset="UTF-8">
-    <title>{{ title }}</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
-</head>
-<body>
-    <main class="container" style="max-width: 600px; margin-top: 50px;">
-        <article>
-            <header>
-                <h2 style="color: #f39c12;">⏱️ Місце заброньовано!</h2>
-                <p>У вас є <strong>10 хвилин</strong>, щоб підтвердити та «оплатити» замовлення.</p>
-            </header>
+{% extends "base.html" %}
 
-            <h3>Деталі замовлення:</h3>
-            <ul>
-                <li><strong>Захід:</strong> {{ concert.title }}</li>
-                <li><strong>Виконавець:</strong> {{ concert.artist }}</li>
-                <li><strong>Місце:</strong> Ряд {{ seat.row_number }}, Місце {{ seat.seat_number }}</li>
-                <li><strong>До сплати:</strong> <strong>{{ concert.base_price }} грн</strong></li>
-            </ul>
+{% block title %}Оплата замовлення - Ticket Booking{% endblock %}
 
-            <form action="/concert/pay" method="POST">
-                <input type="hidden" name="seat_id" value="{{ seat.id }}">
-                <button type="submit" style="background-color: #2ecc71; border-color: #2ecc71;">
-                    💳 Підтвердити та Емулювати Оплату
-                </button>
-            </form>
+{% block content %}
+<div style="max-width: 600px; margin: 40px auto;">
+    <article style="background: #252525; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); border-top: 4px solid #ffb74d;">
+        <header style="margin-bottom: 25px;">
+            <h2 style="color: #ffb74d; margin: 0 0 10px 0;">⏱️ Місце заброньовано!</h2>
+            <p style="color: #aaaaaa; margin: 0;">У вас є <strong style="color: #ffffff;">10 хвилин</strong>, щоб підтвердити та оплатити замовлення.</p>
+        </header>
 
-            <a href="/concert/{{ concert.id }}" class="secondary" role="button" style="width: 100%;">Скасувати</a>
-        </article>
-    </main>
-</body>
-</html>
+        <h3 style="margin-bottom: 15px;">Деталі замовлення:</h3>
+        <ul style="list-style: none; padding: 0; margin: 0 0 30px 0; background: #1e1e1e; border-radius: 6px; border: 1px solid #333333;">
+            <li style="padding: 12px; border-bottom: 1px solid #333333;"><strong>Захід:</strong> {{ concert.title }}</li>
+            <li style="padding: 12px; border-bottom: 1px solid #333333;"><strong>Виконавець:</strong> {{ concert.artist }}</li>
+            <li style="padding: 12px; border-bottom: 1px solid #333333;"><strong>Місце:</strong> Ряд {{ seat.row_number }}, Місце {{ seat.seat_number }}</li>
+            <li style="padding: 12px; color: #03dac6; font-size: 1.1rem;"><strong>До сплати:</strong> <strong>{{ concert.base_price }} грн</strong></li>
+        </ul>
+
+        <form action="/concert/pay" method="POST" style="margin-bottom: 15px;">
+            <input type="hidden" name="seat_id" value="{{ seat.id }}">
+            <button type="submit" class="btn" style="background-color: #03dac6; color: #000000; width: 100%;">
+                💳 Підтвердити та Оплатити
+            </button>
+        </form>
+
+        <a href="/concert/{{ concert.id }}/seats" class="btn" style="background-color: #2c2c2c; color: #cf6679; width: 100%; box-sizing: border-box;">
+            Скасувати
+        </a>
+    </article>
+</div>
+{% endblock %}

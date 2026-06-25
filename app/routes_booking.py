@@ -131,3 +131,52 @@ async def process_payment(
 
     # Після успішної оплати повертаємо користувача на головну сторінку каталогів
     return RedirectResponse(url="/concerts", status_code=303)
+
+
+@router.get("/profile", response_class=HTMLResponse)
+async def profile_page(request: Request, db: AsyncSession = Depends(get_db)):
+    """Особистий кабінет користувача з історією покупок"""
+    user_id_raw = request.cookies.get("user_id")
+    if not user_id_raw:
+        return RedirectResponse(url="/auth/login", status_code=303)
+
+    try:
+        user_id = int(user_id_raw)
+    except ValueError:
+        return RedirectResponse(url="/auth/login", status_code=303)
+
+    # 1. Отримуємо дані користувача
+    user_result = await db.execute(select(User).where(User.id == user_id))
+    user = user_result.scalar_one_or_none()
+    if not user:
+        return RedirectResponse(url="/auth/login", status_code=303)
+
+    # 2. Отримуємо історію замовлень разом із деталями квитків та концертів
+    # Використовуємо JOIN, щоб дістати все одним швидким запитом під навантаженням
+    stmt = (
+        select(Order, Seat, Concert)
+        .join(Seat, Order.seat_id == Seat.id)
+        .join(Concert, Seat.concert_id == Concert.id)
+        .where(Order.user_id == user_id)
+        .order_by(Order.purchased_at.desc())
+    )
+    orders_result = await db.execute(stmt)
+
+    history = []
+    for order, seat, concert in orders_result:
+        history.append({
+            "order_id": order.id,
+            "concert_title": concert.title,
+            "artist": concert.artist,
+            "date": concert.date_time.strftime("%d.%m.%Y %H:%M"),
+            "row": seat.row_number,
+            "seat": seat.seat_number,
+            "amount": float(order.amount_paid),
+            "purchased_at": order.purchased_at.strftime("%d.%m.%Y %H:%M")
+        })
+
+    return templates.TemplateResponse(
+        request=request,
+        name="profile.html",
+        context={"user": user, "history": history}
+    )
