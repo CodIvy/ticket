@@ -23,7 +23,7 @@
             <div class="concert-meta">
                 <p style="margin: 3px 0;">🎙️ <strong>Виконавець:</strong> {{ concert.artist }}</p>
                 <p style="margin: 3px 0;">📍 <strong>Локація:</strong> {{ concert.location }}</p>
-                <p style="margin: 3px 0;">📅 <strong>Дата:</strong> {{ concert.date_time }}</p>
+                <p style="margin: 3px 0;">📅 <p>📅 <strong>Дата:</strong> {{ concert.date_time.strftime('%d.%m.%Y %H:%M') }}</p>
             </div>
         </div>
         <div style="text-align: right; min-width: 150px;">
