@@ -1,3 +1,4 @@
+import os
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -11,7 +12,9 @@ from app.auth_utils import hash_password, verify_password
 # Налаштовуємо роутер саме для авторизації
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-# Налаштовуємо шаблони Jinja2 з правильним шляхом для Docker
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+TEMPLATES_DIR = os.path.join(BASE_DIR, "app", "templates")
+
 templates = Jinja2Templates(directory="templates")
 
 

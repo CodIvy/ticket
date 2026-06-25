@@ -1,4 +1,5 @@
 import json
+import os
 from fastapi import APIRouter, Depends, Request, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -10,7 +11,9 @@ from app.models import Concert, Seat
 
 router = APIRouter(tags=["Concerts"])
 
-# ВИПРАВЛЕНО: Шлях адаптовано під робочу директорію Docker-контейнера
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+TEMPLATES_DIR = os.path.join(BASE_DIR, "app", "templates")
+
 templates = Jinja2Templates(directory="templates")
 
 
