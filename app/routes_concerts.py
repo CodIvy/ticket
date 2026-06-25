@@ -9,7 +9,9 @@ from app.database import get_db, redis_client
 from app.models import Concert, Seat
 
 router = APIRouter(tags=["Concerts"])
-templates = Jinja2Templates(directory="app/templates")
+
+# ВИПРАВЛЕНО: Шлях адаптовано під робочу директорію Docker-контейнера
+templates = Jinja2Templates(directory="templates")
 
 
 @router.get("/concerts", response_class=HTMLResponse)
@@ -34,25 +36,35 @@ async def list_concerts(request: Request, db: AsyncSession = Depends(get_db)):
                 "genre": c.genre,
                 "location": c.location,
                 "date_time": c.date_time.isoformat(),
-                "base_price": float(c.base_price)  # <-- ОСЬ ТУТ ДОДАЄМО float()
+                "base_price": float(c.base_price)
             } for c in concerts
         ]
         # Тепер Redis прийме цей JSON без жодних помилок
         await redis_client.setex("catalog_concerts", 60, json.dumps(concerts_data))
 
+    # ВИПРАВЛЕНО: Чиста передача аргументів без дублювання request всередині context
     return templates.TemplateResponse(
         request=request,
         name="concerts.html",
-        context={"request": request, "concerts": concerts_data}
+        context={"concerts": concerts_data}
     )
+
 
 @router.get("/concert/{concert_id}/seats", response_class=HTMLResponse)
 async def get_seats(concert_id: int, request: Request, db: AsyncSession = Depends(get_db)):
     # Сторінка схеми залу (динамічна, тому без Redis, щоб бачити реальні статуси броні)
-    result = await db.execute(select(Seat).where(Seat.concert_id == concert_id))
+
+    # ВИПРАВЛЕНО: Додано сортування .order_by(), щоб сітка залу завжди була стабільною
+    stmt = (
+        select(Seat)
+        .where(Seat.concert_id == concert_id)
+        .order_by(Seat.row_number, Seat.seat_number)
+    )
+    result = await db.execute(stmt)
     seats = result.scalars().all()
+
     return templates.TemplateResponse(
         request=request,
         name="seats.html",
-        context={"request": request, "seats": seats, "concert_id": concert_id}
+        context={"seats": seats, "concert_id": concert_id}
     )
