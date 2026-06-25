@@ -1,70 +1,84 @@
-import json
-from fastapi import APIRouter, Depends, Request, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from app.database import get_db, redis_client
-from app.models import Concert, Seat
+from app.database import get_db
+from app.models import User
+from app.auth_utils import hash_password, verify_password
 
-router = APIRouter(tags=["Concerts"])
+# Налаштовуємо роутер саме для авторизації
+router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-# ВИПРАВЛЕНО: Шлях адаптовано під робочу директорію Docker-контейнера
+# Налаштовуємо шаблони Jinja2 з правильним шляхом для Docker
 templates = Jinja2Templates(directory="templates")
 
 
-@router.get("/concerts", response_class=HTMLResponse)
-async def list_concerts(request: Request, db: AsyncSession = Depends(get_db)):
-    # 1. Пробуємо взяти дані з кешу Redis
-    cached_concerts = await redis_client.get("catalog_concerts")
-
-    if cached_concerts:
-        print("--- ДАНІ ВЗЯТО З КЕШУ REDIS ---")
-        concerts_data = json.loads(cached_concerts)
-    else:
-        print("--- КЕШ ПОРОЖНІЙ. ЗАПИТ ДО POSTGRESQL ---")
-        result = await db.execute(select(Concert))
-        concerts = result.scalars().all()
-
-        # КРИТИЧНО: Перетворюємо c.base_price на float, щоб json зміг його серіалізувати!
-        concerts_data = [
-            {
-                "id": c.id,
-                "title": c.title,
-                "artist": c.artist,
-                "genre": c.genre,
-                "location": c.location,
-                "date_time": c.date_time.isoformat(),
-                "base_price": float(c.base_price)
-            } for c in concerts
-        ]
-        # Тепер Redis прийме цей JSON без жодних помилок
-        await redis_client.setex("catalog_concerts", 60, json.dumps(concerts_data))
-
-    # ВИПРАВЛЕНО: Чиста передача аргументів без дублювання request всередині context
+@router.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    """Відображення сторінки входу"""
     return templates.TemplateResponse(
         request=request,
-        name="concerts.html",
-        context={"concerts": concerts_data}
+        name="login.html",
+        context={}
     )
 
 
-@router.get("/concert/{concert_id}/seats", response_class=HTMLResponse)
-async def get_seats(concert_id: int, request: Request, db: AsyncSession = Depends(get_db)):
-    # Сторінка схеми залу (динамічна, тому без Redis, щоб бачити реальні статуси броні)
-
-    # ВИПРАВЛЕНО: Додано сортування .order_by(), щоб сітка залу завжди була стабільною
-    stmt = (
-        select(Seat)
-        .where(Seat.concert_id == concert_id)
-        .order_by(Seat.row_number, Seat.seat_number)
-    )
-    result = await db.execute(stmt)
-    seats = result.scalars().all()
-
+@router.get("/register", response_class=HTMLResponse)
+async def register_page(request: Request):
+    """Відображення сторінки реєстрації"""
+    # Якщо сторінка реєстрації ідентична login.html, використовуємо login.html
+    # або окремий файл register.html, якщо ви його створили
     return templates.TemplateResponse(
         request=request,
-        name="seats.html",
-        context={"seats": seats, "concert_id": concert_id}
+        name="login.html",
+        context={}
     )
+
+
+@router.post("/register")
+async def register_user(
+        email: str = Form(...),
+        password: str = Form(...),
+        db: AsyncSession = Depends(get_db)
+):
+    """Обробка форми реєстрації нового користувача"""
+    async with db.begin():
+        result = await db.execute(select(User).where(User.email == email))
+        if result.scalar_one_or_none():
+            raise HTTPException(status_code=400, detail="Email вже зайнятий")
+
+        new_user = User(email=email, password_hash=hash_password(password))
+        db.add(new_user)
+        await db.flush()
+
+        redirect = RedirectResponse(url="/concerts", status_code=303)
+        redirect.set_cookie(key="user_id", value=str(new_user.id), httponly=True)
+        return redirect
+
+
+@router.post("/login")
+async def login_user(
+        email: str = Form(...),
+        password: str = Form(...),
+        db: AsyncSession = Depends(get_db)
+):
+    """Обробка форми входу в систему"""
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalar_one_or_none()
+
+    if not user or not verify_password(password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Неправильний email або пароль")
+
+    redirect = RedirectResponse(url="/concerts", status_code=303)
+    redirect.set_cookie(key="user_id", value=str(user.id), httponly=True)
+    return redirect
+
+
+@router.get("/logout")
+async def logout_user():
+    """Вихід із системи (видалення cookies)"""
+    redirect = RedirectResponse(url="/auth/login", status_code=303)
+    redirect.delete_cookie(key="user_id")
+    return redirect
