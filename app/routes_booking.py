@@ -8,7 +8,7 @@ from sqlalchemy import select
 from datetime import datetime, timedelta, timezone
 
 from app.database import get_db
-from app.models import Seat, SeatStatus
+from app.models import Seat, Concert, SeatStatus
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEMPLATES_DIR = os.path.join(BASE_DIR, "app", "templates")
@@ -59,18 +59,25 @@ async def book_seat(
     return RedirectResponse(url=f"/concert/payment-page/{seat_id}", status_code=303)
 @router.get("/payment-page/{seat_id}", response_class=HTMLResponse)
 async def payment_page(seat_id: int, request: Request, db: AsyncSession = Depends(get_db)):
-    """Відображення сторінки оплати для заброньованого місця"""
-    # Підтягуємо інформацію про місце, щоб показати користувачу, що саме він купує
-    query = select(Seat).where(Seat.id == seat_id)
-    result = await db.execute(query)
-    seat = result.scalar_one_or_none()
+    # 1. Отримуємо місце
+    query_seat = select(Seat).where(Seat.id == seat_id)
+    result_seat = await db.execute(query_seat)
+    seat = result_seat.scalar_one_or_none()
 
     if not seat:
         raise HTTPException(status_code=404, detail="Місце не знайдено")
 
-    # Передаємо у шаблон ідентифікатор місця та номер ряду/місця
+    # 2. Додано: Отримуємо концерт, пов'язаний із цим місцем
+    query_concert = select(Concert).where(Concert.id == seat.concert_id)
+    result_concert = await db.execute(query_concert)
+    concert = result_concert.scalar_one_or_none()
+
+    if not concert:
+        raise HTTPException(status_code=404, detail="Концерт не знайдено")
+
+    # 3. Передаємо обидва об'єкти в шаблон
     return templates.TemplateResponse(
         request=request,
-        name="payment.html",  # Переконайтеся, що файл payment.html є в папки templates
-        context={"seat": seat}
+        name="payment.html",
+        context={"seat": seat, "concert": concert} # Тепер змінна 'concert' доступна у шаблоні
     )
