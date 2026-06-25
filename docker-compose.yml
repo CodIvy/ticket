@@ -1,0 +1,40 @@
+services:
+  # Наш FastAPI веб-додаток
+  web_app:
+    build: .
+    container_name: ticket_fastapi
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://ticket_user:1234@postgres_db:5432/ticket_service_db
+      - REDIS_URL=redis://redis_cache:6379
+    depends_on:
+      - postgres_db
+      - redis_cache
+
+  # Наш PostgreSQL з розширеним лімітом клієнтів
+  postgres_db:
+    image: postgres:15-alpine
+    container_name: ticket_postgres
+    restart: always
+    command: ["postgres", "-c", "max_connections=200"]
+    environment:
+      POSTGRES_USER: ticket_user
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: ticket_service_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # Наш Redis для швидкого кешу каталогу концертів
+  redis_cache:
+    image: redis:7-alpine
+    container_name: ticket_redis
+    restart: always
+    ports:
+      - "6379:6379"
+
+volumes:
+  pgdata:

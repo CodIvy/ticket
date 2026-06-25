@@ -1,0 +1,35 @@
+import http from 'k6/http';
+import { check } from 'k6';
+
+export const options = {
+    // 100 віртуальних користувачів роблять по 1 запиту ОДНОЧАСНО
+    vus: 100,
+    iterations: 100,
+};
+
+export default function () {
+    const url = 'http://127.0.0.1:8080/concert/book';
+
+    // Будемо бити в seat_id = 1
+    const payload = {
+        seat_id: '3',
+    };
+
+    const params = {
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            // Передаємо куку авторизації, щоб база даних PostgreSQL не видавала ForeignKeyViolationError
+            'Cookie': 'user_id=999',
+        },
+        // Забороняємо автоматичний редірект, щоб зловити чистий статус першої відповіді
+        redirects: 0,
+    };
+
+    const res = http.post(url, payload, params);
+
+    // Очікуємо: 1 запит поверне 303 (успішний редірект на оплату),
+    // а інші 99 повернуть 409 (Conflict), бо місце вже зайняте.
+    check(res, {
+        'Статус 303 або 409': (r) => r.status === 303 || r.status === 409,
+    });
+}

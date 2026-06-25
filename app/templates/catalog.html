@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+</head>
+<body>
+    <nav class="container">
+        <ul>
+            <li><strong>🎸 TicketShow</strong></li>
+        </ul>
+       <ul>
+    <li><a href="/">Каталог</a></li>
+    {% if user_id %}
+        <li><a href="/auth/dashboard" class="secondary">Мій Кабінет</a></li>
+        <li><a href="/auth/logout" class="outline" role="button">Вийти</a></li>
+    {% else %}
+        <li><a href="/auth/login" class="outline" role="button">Увійти</a></li>
+    {% endif %}
+</ul>
+    </nav>
+
+    <main class="container">
+        <header>
+            <h1>Доступні концерти</h1>
+            <p>Знайдіть свій улюблений захід та забронюйте найкращі місця.</p>
+        </header>
+
+        <div style="margin-bottom: 30px;">
+            <a href="/" class="button {% if selected_genre %}secondary{% endif %}">Всі жанри</a>
+            <a href="/?genre=Rock" class="button {% if selected_genre != 'Rock' %}secondary{% endif %}">Рок</a>
+            <a href="/?genre=Pop" class="button {% if selected_genre != 'Pop' %}secondary{% endif %}">Поп</a>
+        </div>
+
+        <div class="grid">
+            {% for concert in concerts %}
+            <article>
+                <header>
+                    <strong>{{ concert.artist }}</strong>
+                </header>
+                <h3>{{ concert.title }}</h3>
+                <p>📍 Місце: {{ concert.location }}</p>
+                <p>📅 Дата: {{ concert.date_time }}</p>
+                <p>🏷️ Жанр: <mark>{{ concert.genre }}</mark></p>
+                <footer>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>Ціна від: <strong>{{ concert.base_price }} грн</strong></span>
+                        <a href="/concert/{{ concert.id }}" role="button">Обрати місце</a>
+                    </div>
+                </footer>
+            </article>
+            {% else %}
+                <p>Наразі активних концертів у цьому жанрі немає. Завітайте пізніше!</p>
+            {% endfor %}
+        </div>
+    </main>
+</body>
+</html>

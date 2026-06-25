@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+</head>
+<body>
+    <main class="container" style="max-width: 600px; margin-top: 50px;">
+        <article>
+            <header>
+                <h2 style="color: #f39c12;">⏱️ Місце заброньовано!</h2>
+                <p>У вас є <strong>10 хвилин</strong>, щоб підтвердити та «оплатити» замовлення.</p>
+            </header>
+
+            <h3>Деталі замовлення:</h3>
+            <ul>
+                <li><strong>Захід:</strong> {{ concert.title }}</li>
+                <li><strong>Виконавець:</strong> {{ concert.artist }}</li>
+                <li><strong>Місце:</strong> Ряд {{ seat.row_number }}, Місце {{ seat.seat_number }}</li>
+                <li><strong>До сплати:</strong> <strong>{{ concert.base_price }} грн</strong></li>
+            </ul>
+
+            <form action="/concert/pay" method="POST">
+                <input type="hidden" name="seat_id" value="{{ seat.id }}">
+                <button type="submit" style="background-color: #2ecc71; border-color: #2ecc71;">
+                    💳 Підтвердити та Емулювати Оплату
+                </button>
+            </form>
+
+            <a href="/concert/{{ concert.id }}" class="secondary" role="button" style="width: 100%;">Скасувати</a>
+        </article>
+    </main>
+</body>
+</html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+</head>
+<body>
+    <nav class="container">
+        <ul>
+            <li><strong>🎸 TicketShow</strong></li>
+        </ul>
+        <ul>
+            <li><a href="/">Назад до каталогу</a></li>
+            <li><a href="/auth/logout" class="outline" role="button">Вийти</a></li>
+        </ul>
+    </nav>
+
+    <main class="container">
+        <article>
+            <header>
+                <h2>👋 Вітаємо в особистому кабінеті!</h2>
+                <p>Ваш акаунт: <strong>{{ user_email }}</strong></p>
+            </header>
+
+            <h3>📜 Історія ваших покупок</h3>
+
+            {% if history %}
+                <figure>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>№ Замовлення</th>
+                                <th>Захід / Виконавець</th>
+                                <th>Дата концерту</th>
+                                <th>Місце</th>
+                                <th>Сума</th>
+                                <th>Дата купівлі</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in history %}
+                            <tr>
+                                <td>#{{ item.order_id }}</td>
+                                <td>
+                                    <strong>{{ item.concert_title }}</strong><br>
+                                    <small>{{ item.artist }} (📍 {{ item.location }})</small>
+                                </td>
+                                <td>{{ item.date_time }}</td>
+                                <td><mark>{{ item.seat_info }}</mark></td>
+                                <td><strong>{{ item.amount }} грн</strong></td>
+                                <td>{{ item.date_purchased }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </figure>
+            {% else %}
+                <div style="padding: 20px; text-align: center; background: #f9f9f9; border-radius: 4px;">
+                    <p>Ви ще не придбали жодного квитка.</p>
+                    <a href="/" role="button">Перейти до каталогу</a>
+                </div>
+            {% endif %}
+        </article>
+    </main>
+</body>
+</html>
