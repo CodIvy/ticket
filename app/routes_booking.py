@@ -2,13 +2,11 @@ import os
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse, HTMLResponse
-from app.models import Seat
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from datetime import datetime, timedelta, timezone
-
 from app.database import get_db
-from app.models import Seat, Concert, SeatStatus
+from app.models import Seat, Concert, SeatStatus, Order
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEMPLATES_DIR = os.path.join(BASE_DIR, "app", "templates")
@@ -81,3 +79,55 @@ async def payment_page(seat_id: int, request: Request, db: AsyncSession = Depend
         name="payment.html",
         context={"seat": seat, "concert": concert} # Тепер змінна 'concert' доступна у шаблоні
     )
+
+
+@router.post("/pay")
+async def process_payment(
+        request: Request,
+        seat_id: int = Form(...),
+        db: AsyncSession = Depends(get_db)
+):
+    """Обробка успішної оплати квитка"""
+    # 1. Шукаємо місце та блокуємо рядок для уникнення race conditions
+    query = select(Seat).where(Seat.id == seat_id).with_for_update()
+    result = await db.execute(query)
+    seat = result.scalar_one_or_none()
+
+    if not seat:
+        raise HTTPException(status_code=404, detail="Місце не знайдено")
+
+    # 2. Отримуємо ID користувача з кук
+    user_id_raw = request.cookies.get("user_id")
+    try:
+        user_id = int(user_id_raw) if user_id_raw else None
+    except ValueError:
+        user_id = None
+
+    # 3. Перевіряємо, чи місце дійсно заброньоване цим користувачем (або анонімом)
+    if seat.status != SeatStatus.BOOKED:
+        raise HTTPException(status_code=400, detail="Місце не заброньоване або вже викуплене")
+
+    # 4. Отримуємо ціну концерту для фіксації суми в замовленні
+    query_concert = select(Concert).where(Concert.id == seat.concert_id)
+    result_concert = await db.execute(query_concert)
+    concert = result_concert.scalar_one_or_none()
+
+    amount = float(concert.base_price) if concert else 0.0
+
+    # 5. Змінюємо статус місця на SOLD та очищаємо таймер броні
+    seat.status = SeatStatus.SOLD
+    seat.reserved_until = None
+
+    # 6. Фіксуємо фінансове замовлення, якщо користувач авторизований
+    if user_id:
+        new_order = Order(
+            user_id=user_id,
+            seat_id=seat.id,
+            amount_paid=amount
+        )
+        db.add(new_order)
+
+    await db.commit()
+
+    # Після успішної оплати повертаємо користувача на головну сторінку каталогів
+    return RedirectResponse(url="/concerts", status_code=303)
