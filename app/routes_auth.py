@@ -1,4 +1,5 @@
 import os
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -6,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.database import get_db
-from app.models import User
+from app.models import User, Order, Seat, Concert  # Імпортовано всі необхідні моделі для історії покупок
 from app.auth_utils import hash_password, verify_password
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -45,7 +46,14 @@ async def register_user(
     if result.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Email вже зайнятий")
 
-    new_user = User(email=email, password_hash=hash_password(password))
+    # Створюємо чистий нативний об'єкт дати без таймзони для PostgreSQL
+    now_naive = datetime.now(timezone.utc).replace(tzinfo=None)
+
+    new_user = User(
+        email=email,
+        password_hash=hash_password(password),
+        created_at=now_naive
+    )
     db.add(new_user)
     await db.commit()
 
@@ -76,3 +84,51 @@ async def logout_user():
     redirect = RedirectResponse(url="/auth/login", status_code=303)
     redirect.delete_cookie(key="user_id")
     return redirect
+
+
+@router.get("/profile", response_class=HTMLResponse)
+async def profile_page(request: Request, db: AsyncSession = Depends(get_db)):
+    """Особистий кабінет користувача з історією покупок"""
+    user_id_raw = request.cookies.get("user_id")
+    if not user_id_raw:
+        return RedirectResponse(url="/auth/login", status_code=303)
+
+    try:
+        user_id = int(user_id_raw)
+    except ValueError:
+        return RedirectResponse(url="/auth/login", status_code=303)
+
+    # 1. Отримуємо профіль користувача
+    user_result = await db.execute(select(User).where(User.id == user_id))
+    user = user_result.scalar_one_or_none()
+    if not user:
+        return RedirectResponse(url="/auth/login", status_code=303)
+
+    # 2. Швидкий JOIN запит для витягування повної історії ордерів
+    stmt = (
+        select(Order, Seat, Concert)
+        .join(Seat, Order.seat_id == Seat.id)
+        .join(Concert, Seat.concert_id == Concert.id)
+        .where(Order.user_id == user_id)
+        .order_by(Order.purchased_at.desc())
+    )
+    orders_result = await db.execute(stmt)
+
+    history = []
+    for order, seat, concert in orders_result:
+        history.append({
+            "order_id": order.id,
+            "concert_title": concert.title,
+            "artist": concert.artist,
+            "date": concert.date_time.strftime("%d.%m.%Y %H:%M") if concert.date_time else "",
+            "row": seat.row_number,
+            "seat": seat.seat_number,
+            "amount": float(order.amount_paid),
+            "purchased_at": order.purchased_at.strftime("%d.%m.%Y %H:%M") if order.purchased_at else ""
+        })
+
+    return templates.TemplateResponse(
+        request=request,
+        name="profile.html",
+        context={"user": user, "history": history}
+    )
