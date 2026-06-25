@@ -32,7 +32,10 @@ async def book_seat(
 
     now = datetime.now(timezone.utc)
 
-    if seat.date_time and seat.date_time.tzinfo is None:
+    if seat.reserved_until and seat.reserved_until.tzinfo is None:
+        now = now.replace(tzinfo=None)
+    elif seat.reserved_until is None:
+        # Якщо броні ще не було, для безпеки порівняння теж прибираємо tzinfo
         now = now.replace(tzinfo=None)
 
     is_free = (seat.status == SeatStatus.FREE) or (
