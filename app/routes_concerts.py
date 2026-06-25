@@ -41,6 +41,7 @@ async def list_concerts(request: Request, db: AsyncSession = Depends(get_db)):
         await redis_client.setex("catalog_concerts", 60, json.dumps(concerts_data))
 
     return templates.TemplateResponse(
+        request=request,
         name="concerts.html",
         context={"request": request, "concerts": concerts_data}
     )
@@ -51,6 +52,7 @@ async def get_seats(concert_id: int, request: Request, db: AsyncSession = Depend
     result = await db.execute(select(Seat).where(Seat.concert_id == concert_id))
     seats = result.scalars().all()
     return templates.TemplateResponse(
+        request=request,
         name="seats.html",
         context={"request": request, "seats": seats, "concert_id": concert_id}
     )
