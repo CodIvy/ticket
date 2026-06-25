@@ -1,8 +1,13 @@
+import sys
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
+# Захист від помилок імпорту всередині Docker-контейнера
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.database import engine, Base
 from app.scraper import fetch_and_sync_concerts
@@ -12,7 +17,7 @@ from app.routes_booking import router as booking_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Автоматичне створення таблиць на старті
+    # Автоматичне створення таблиць на старті у PostgreSQL
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     print("--- СХЕМА БАЗИ ДАНИХ УСПІШНО СИНХРОНІЗОВАНА ---")
@@ -23,15 +28,23 @@ async def lifespan(app: FastAPI):
     scheduler.start()
     print("--- ПЛАНУВАЛЬНИК ФОНОВИХ ЗАВДАНЬ ЗАПУЩЕНО ---")
 
-    # Первинна синхронізація
+    # Первинна синхронізація (наповнення бази mock-даними)
     await fetch_and_sync_concerts()
 
     yield
     scheduler.shutdown()
     print("--- ПЛАНУВАЛЬНИК ФОНОВИХ ЗАВДАНЬ ЗУПИНЕНО ---")
 
-app = FastAPI(title="Ticket Booking Service", lifespan=lifespan)
+app = FastAPI(
+    title="Ticket Booking Service",
+    description="Високонавантажена система бронювання квитків",
+    lifespan=lifespan
+)
 
+# ВИПРАВЛЕНО: Повернуто роздачу статичних файлів із правильним шляхом для Docker WORKDIR
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Підключення бізнес-логіки
 app.include_router(auth_router)
 app.include_router(concerts_router)
 app.include_router(booking_router)
