@@ -40,12 +40,17 @@ async def list_concerts(request: Request, db: AsyncSession = Depends(get_db)):
         # Тепер Redis прийме цей JSON без жодних помилок
         await redis_client.setex("catalog_concerts", 60, json.dumps(concerts_data))
 
-    return templates.TemplateResponse("concerts.html", {"request": request, "concerts": concerts_data})
-
+    return templates.TemplateResponse(
+        name="concerts.html",
+        context={"request": request, "concerts": concerts_data}
+    )
 
 @router.get("/concert/{concert_id}/seats", response_class=HTMLResponse)
 async def get_seats(concert_id: int, request: Request, db: AsyncSession = Depends(get_db)):
     # Сторінка схеми залу (динамічна, тому без Redis, щоб бачити реальні статуси броні)
     result = await db.execute(select(Seat).where(Seat.concert_id == concert_id))
     seats = result.scalars().all()
-    return templates.TemplateResponse("seats.html", {"request": request, "seats": seats, "concert_id": concert_id})
+    return templates.TemplateResponse(
+        name="seats.html",
+        context={"request": request, "seats": seats, "concert_id": concert_id}
+    )
