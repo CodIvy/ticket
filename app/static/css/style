@@ -1,0 +1,103 @@
+/* Базові налаштування сторінки */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #121212;
+    color: #e0e0e0;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: #1e1e1e;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+h1, h2 {
+    color: #ffffff;
+}
+
+a {
+    color: #bb86fc;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Кнопки дій */
+.btn {
+    background-color: #6200ee;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+
+.btn:hover {
+    background-color: #3700b3;
+}
+
+/* Екран / Сцена на схемі залу */
+.screen {
+    background: #333333;
+    text-align: center;
+    padding: 10px;
+    margin-bottom: 30px;
+    color: #888888;
+    font-weight: bold;
+    letter-spacing: 5px;
+    border-radius: 4px;
+    border: 1px solid #444;
+}
+
+/* Інтерактивна сітка залу (4 ряди по 10 місць) */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 12px;
+    margin-bottom: 30px;
+}
+
+/* Базовий клас для кнопок-місць */
+.seat-btn {
+    padding: 12px 2px;
+    text-align: center;
+    border-radius: 6px;
+    border: none;
+    font-size: 0.85rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.2s;
+}
+
+.seat-btn:hover:not([disabled]) {
+    transform: scale(1.08);
+}
+
+/* Динамічні статуси місць (відповідають SeatStatus в models.py) */
+.seat-FREE {
+    background-color: #03dac6;
+    color: #000000;
+}
+
+.seat-BOOKED {
+    background-color: #ffb74d;
+    color: #000000;
+    cursor: not-allowed;
+    opacity: 0.8;
+}
+
+.seat-SOLD {
+    background-color: #cf6679;
+    color: #ffffff;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
