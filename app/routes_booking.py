@@ -19,9 +19,9 @@ async def book_seat(
 ):
     user_id_raw = request.cookies.get("user_id")
     try:
-        user_id = int(user_id_raw) if user_id_raw else 999
+        user_id = int(user_id_raw) if user_id_raw else None
     except ValueError:
-        user_id = 999
+        user_id = None
 
     query = select(Seat).where(Seat.id == seat_id).with_for_update()
     result = await db.execute(query)
@@ -35,7 +35,6 @@ async def book_seat(
     if seat.reserved_until and seat.reserved_until.tzinfo is None:
         now = now.replace(tzinfo=None)
     elif seat.reserved_until is None:
-        # Якщо броні ще не було, для безпеки порівняння теж прибираємо tzinfo
         now = now.replace(tzinfo=None)
 
     is_free = (seat.status == SeatStatus.FREE) or (
