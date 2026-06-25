@@ -17,7 +17,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Копіюємо всю папку додатка в контейнер
-COPY ./app ./app
+COPY . .
 
 # Відкриваємо порт 8000, на якому працюватиме FastAPI
 EXPOSE 8000
