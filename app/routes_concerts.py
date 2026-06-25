@@ -1,6 +1,6 @@
 import json
 import os
-from fastapi import APIRouter, Depends, Request, HTTPException
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,23 +14,19 @@ router = APIRouter(tags=["Concerts"])
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEMPLATES_DIR = os.path.join(BASE_DIR, "app", "templates")
 
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 
 @router.get("/concerts", response_class=HTMLResponse)
 async def list_concerts(request: Request, db: AsyncSession = Depends(get_db)):
-    # 1. Пробуємо взяти дані з кешу Redis
     cached_concerts = await redis_client.get("catalog_concerts")
 
     if cached_concerts:
-        print("--- ДАНІ ВЗЯТО З КЕШУ REDIS ---")
         concerts_data = json.loads(cached_concerts)
     else:
-        print("--- КЕШ ПОРОЖНІЙ. ЗАПИТ ДО POSTGRESQL ---")
-        result = await db.execute(select(Concert))
+        result = await db.execute(select(Concert).order_by(Concert.date_time))
         concerts = result.scalars().all()
 
-        # КРИТИЧНО: Перетворюємо c.base_price на float, щоб json зміг його серіалізувати!
         concerts_data = [
             {
                 "id": c.id,
@@ -42,10 +38,8 @@ async def list_concerts(request: Request, db: AsyncSession = Depends(get_db)):
                 "base_price": float(c.base_price)
             } for c in concerts
         ]
-        # Тепер Redis прийме цей JSON без жодних помилок
         await redis_client.setex("catalog_concerts", 60, json.dumps(concerts_data))
 
-    # ВИПРАВЛЕНО: Чиста передача аргументів без дублювання request всередині context
     return templates.TemplateResponse(
         request=request,
         name="concerts.html",
@@ -55,9 +49,6 @@ async def list_concerts(request: Request, db: AsyncSession = Depends(get_db)):
 
 @router.get("/concert/{concert_id}/seats", response_class=HTMLResponse)
 async def get_seats(concert_id: int, request: Request, db: AsyncSession = Depends(get_db)):
-    # Сторінка схеми залу (динамічна, тому без Redis, щоб бачити реальні статуси броні)
-
-    # ВИПРАВЛЕНО: Додано сортування .order_by(), щоб сітка залу завжди була стабільною
     stmt = (
         select(Seat)
         .where(Seat.concert_id == concert_id)

@@ -9,18 +9,16 @@ from app.database import get_db
 from app.models import User
 from app.auth_utils import hash_password, verify_password
 
-# Налаштовуємо роутер саме для авторизації
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEMPLATES_DIR = os.path.join(BASE_DIR, "app", "templates")
 
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
-    """Відображення сторінки входу"""
     return templates.TemplateResponse(
         request=request,
         name="login.html",
@@ -30,9 +28,6 @@ async def login_page(request: Request):
 
 @router.get("/register", response_class=HTMLResponse)
 async def register_page(request: Request):
-    """Відображення сторінки реєстрації"""
-    # Якщо сторінка реєстрації ідентична login.html, використовуємо login.html
-    # або окремий файл register.html, якщо ви його створили
     return templates.TemplateResponse(
         request=request,
         name="login.html",
@@ -46,19 +41,17 @@ async def register_user(
         password: str = Form(...),
         db: AsyncSession = Depends(get_db)
 ):
-    """Обробка форми реєстрації нового користувача"""
-    async with db.begin():
-        result = await db.execute(select(User).where(User.email == email))
-        if result.scalar_one_or_none():
-            raise HTTPException(status_code=400, detail="Email вже зайнятий")
+    result = await db.execute(select(User).where(User.email == email))
+    if result.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Email вже зайнятий")
 
-        new_user = User(email=email, password_hash=hash_password(password))
-        db.add(new_user)
-        await db.flush()
+    new_user = User(email=email, password_hash=hash_password(password))
+    db.add(new_user)
+    await db.commit()
 
-        redirect = RedirectResponse(url="/concerts", status_code=303)
-        redirect.set_cookie(key="user_id", value=str(new_user.id), httponly=True)
-        return redirect
+    redirect = RedirectResponse(url="/concerts", status_code=303)
+    redirect.set_cookie(key="user_id", value=str(new_user.id), httponly=True)
+    return redirect
 
 
 @router.post("/login")
@@ -67,7 +60,6 @@ async def login_user(
         password: str = Form(...),
         db: AsyncSession = Depends(get_db)
 ):
-    """Обробка форми входу в систему"""
     result = await db.execute(select(User).where(User.email == email))
     user = result.scalar_one_or_none()
 
@@ -81,7 +73,6 @@ async def login_user(
 
 @router.get("/logout")
 async def logout_user():
-    """Вихід із системи (видалення cookies)"""
     redirect = RedirectResponse(url="/auth/login", status_code=303)
     redirect.delete_cookie(key="user_id")
     return redirect
