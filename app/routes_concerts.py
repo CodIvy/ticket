@@ -25,15 +25,19 @@ async def list_concerts(request: Request, db: AsyncSession = Depends(get_db)):
         result = await db.execute(select(Concert))
         concerts = result.scalars().all()
 
-        # Серіалізуємо об'єкти SQLAlchemy у звичайний список словників для JSON
+        # КРИТИЧНО: Перетворюємо c.base_price на float, щоб json зміг його серіалізувати!
         concerts_data = [
             {
-                "id": c.id, "title": c.title, "artist": c.artist,
-                "genre": c.genre, "location": c.location,
-                "date_time": c.date_time.isoformat(), "base_price": c.base_price
+                "id": c.id,
+                "title": c.title,
+                "artist": c.artist,
+                "genre": c.genre,
+                "location": c.location,
+                "date_time": c.date_time.isoformat(),
+                "base_price": float(c.base_price)  # <-- ОСЬ ТУТ ДОДАЄМО float()
             } for c in concerts
         ]
-        # Записуємо в Redis на 60 секунд
+        # Тепер Redis прийме цей JSON без жодних помилок
         await redis_client.setex("catalog_concerts", 60, json.dumps(concerts_data))
 
     return templates.TemplateResponse("concerts.html", {"request": request, "concerts": concerts_data})
