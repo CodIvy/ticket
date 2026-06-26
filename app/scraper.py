@@ -4,7 +4,9 @@ from sqlalchemy import select
 from app.database import async_session, redis_client
 from app.models import Concert, Seat, SeatStatus
 
-
+#По більшій частині код тут згенерований з моєю перевіркою але через некритичність для виконання завдання
+# та можливі проблеми при синхронізації даних в бд з тими що в інтернеті задля простішого запуску
+# та перевірки від ідеї автоматичного оновлення відмовився sadge
 async def fetch_and_sync_concerts():
     try:
         now_utc = datetime.now(timezone.utc)

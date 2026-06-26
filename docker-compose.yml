@@ -1,5 +1,5 @@
 services:
-  # Наш FastAPI веб-додаток
+  # FastAPI
   web_app:
     build: .
     container_name: ticket_fastapi
@@ -13,7 +13,7 @@ services:
       - postgres_db
       - redis_cache
 
-  # Наш PostgreSQL з розширеним лімітом клієнтів
+  # PostgreSQL
   postgres_db:
     image: postgres:15-alpine
     container_name: ticket_postgres
@@ -28,7 +28,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
-  # Наш Redis для швидкого кешу каталогу концертів
+  # Redis кеш
   redis_cache:
     image: redis:7-alpine
     container_name: ticket_redis

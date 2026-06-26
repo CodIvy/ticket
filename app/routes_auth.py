@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.database import get_db
-from app.models import User, Order, Seat, Concert  # Імпортовано всі необхідні моделі для історії покупок
+from app.models import User, Order, Seat, Concert
 from app.auth_utils import hash_password, verify_password
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -17,7 +17,8 @@ TEMPLATES_DIR = os.path.join(BASE_DIR, "app", "templates")
 
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
-
+#Особистий кабінет з регістрацією та логіном все+- інтуітивне і краще не трогати
+#(ця частина кода за весь час розробки видавала найменше ошибок)
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
     return templates.TemplateResponse(
@@ -46,7 +47,6 @@ async def register_user(
     if result.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Email вже зайнятий")
 
-    # Створюємо чистий нативний об'єкт дати без таймзони для PostgreSQL
     now_naive = datetime.now(timezone.utc).replace(tzinfo=None)
 
     new_user = User(
@@ -98,13 +98,11 @@ async def profile_page(request: Request, db: AsyncSession = Depends(get_db)):
     except ValueError:
         return RedirectResponse(url="/auth/login", status_code=303)
 
-    # 1. Отримуємо профіль користувача
     user_result = await db.execute(select(User).where(User.id == user_id))
     user = user_result.scalar_one_or_none()
     if not user:
         return RedirectResponse(url="/auth/login", status_code=303)
 
-    # 2. Швидкий JOIN запит для витягування повної історії ордерів
     stmt = (
         select(Order, Seat, Concert)
         .join(Seat, Order.seat_id == Seat.id)

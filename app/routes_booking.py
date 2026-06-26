@@ -15,7 +15,8 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 router = APIRouter(prefix="/concert", tags=["Booking"])
 
-
+#Тут відбувається емуляція покупки квитка та його бронь в базі даних
+# для очищення всіх броней можна підняти БД з нуля для тестування
 @router.post("/book")
 async def book_seat(
         request: Request,
@@ -89,7 +90,7 @@ async def process_payment(
         seat_id: int = Form(...),
         db: AsyncSession = Depends(get_db)
 ):
-    """Обробка успішної оплати квитка з очищенням tzinfo для уникнення DataError"""
+    """Обробка успішної оплати квитка"""
     query = select(Seat).where(Seat.id == seat_id).with_for_update()
     result = await db.execute(query)
     seat = result.scalar_one_or_none()
@@ -116,7 +117,6 @@ async def process_payment(
     seat.reserved_until = None
 
     if user_id:
-        # Створюємо чисту дату без таймзони для сумісності з TIMESTAMP PostgreSQL
         now_naive = datetime.now(timezone.utc).replace(tzinfo=None)
 
         new_order = Order(

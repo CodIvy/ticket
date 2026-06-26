@@ -2,33 +2,38 @@ import http from 'k6/http';
 import { check } from 'k6';
 
 export const options = {
-    // 100 віртуальних користувачів роблять по 1 запиту ОДНОЧАСНО
-    vus: 100,
-    iterations: 100,
+    scenarios: {
+        race_condition_test: {
+            executor: 'per-vu-iterations',
+            vus: 100,                      // 100 користувачів
+            iterations: 1,                 // 1 запит
+            maxDuration: '15s',
+        },
+    },
 };
 
 export default function () {
-    const url = 'http://127.0.0.1:8080/concert/book';
+    // Публічна адреса в Azure
+    const url = 'http://172.201.98.124:8000/concert/book';
 
-    // Будемо бити в seat_id = 1
+    // Тестуємо місце під ID
     const payload = {
-        seat_id: '3',
+        seat_id: '10',
     };
 
     const params = {
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
-            // Передаємо куку авторизації, щоб база даних PostgreSQL не видавала ForeignKeyViolationError
-            'Cookie': 'user_id=999',
+            // !! Передаємо користувача яки існує
+            'Cookie': 'user_id=1',
         },
-        // Забороняємо автоматичний редірект, щоб зловити чистий статус першої відповіді
+        // Прибираємо редіректи
         redirects: 0,
     };
 
     const res = http.post(url, payload, params);
 
-    // Очікуємо: 1 запит поверне 303 (успішний редірект на оплату),
-    // а інші 99 повернуть 409 (Conflict), бо місце вже зайняте.
+    // 303 повинен повернути лише 1 запит
     check(res, {
         'Статус 303 або 409': (r) => r.status === 303 || r.status === 409,
     });

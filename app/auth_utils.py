@@ -1,5 +1,5 @@
 import bcrypt
-
+#Password check
 def hash_password(password: str, rounds: int = 12) -> str:
     password_bytes = password.encode('utf-8')
     salt = bcrypt.gensalt(rounds=rounds)

@@ -21,13 +21,13 @@
             <span style="font-size: 0.85rem; color: #03dac6; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">{{ concert.genre }}</span>
             <h3 style="margin: 5px 0 10px 0;">{{ concert.title }}</h3>
             <div class="concert-meta">
-                <p style="margin: 3px 0;">🎙️ <strong>Виконавець:</strong> {{ concert.artist }}</p>
-                <p style="margin: 3px 0;">📍 <strong>Локація:</strong> {{ concert.location }}</p>
-                <p style="margin: 3px 0;">📅 <p>📅 <strong>Дата:</strong> {{ concert.date_time.strftime('%d.%m.%Y %H:%M') }}</p>
+                <p style="margin: 3px 0;">🎙 <strong>Виконавець:</strong> {{ concert.artist }}</p>
+                <p style="margin: 3px 0;"> <strong>Локація:</strong> {{ concert.location }}</p>
+                <p style="margin: 3px 0;"> <p> <strong>Дата:</strong> {{ concert.date_time.strftime('%d.%m.%Y %H:%M') }}</p>
             </div><div class="concert-meta">
-                <p style="margin: 3px 0;">🎙️ <strong>Виконавець:</strong> {{ concert.artist }}</p>
-                <p style="margin: 3px 0;">📍 <strong>Локація:</strong> {{ concert.location }}</p>
-<p style="margin: 3px 0;">📅 <strong>Дата:</strong>
+                <p style="margin: 3px 0;"> <strong>Виконавець:</strong> {{ concert.artist }}</p>
+                <p style="margin: 3px 0;"> <strong>Локація:</strong> {{ concert.location }}</p>
+<p style="margin: 3px 0;"> <strong>Дата:</strong>
     {% if concert.date_time is string %}
         {{ concert.date_time[8:10] }}.{{ concert.date_time[5:7] }}.{{ concert.date_time[:4] }} {{ concert.date_time[11:16] }}
     {% else %}

@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from sqlalchemy import String, Integer, ForeignKey, Numeric, DateTime, Enum, UniqueConstraint, Index
 from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
-
+#These are models for different "tables" used
 class SeatStatus(str, enum.Enum):
     FREE = "FREE"
     BOOKED = "BOOKED"

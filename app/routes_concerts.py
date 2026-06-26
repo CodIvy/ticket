@@ -20,20 +20,18 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 @router.get("/concerts", response_class=HTMLResponse)
 async def list_concerts(request: Request, genre: str = None, db: AsyncSession = Depends(get_db)):
-    # Зчитуємо ID користувача для динамічного відображення кнопок у шапці
     user_id = request.cookies.get("user_id")
 
-    # 1. Спроба отримати повний каталог із Redis
+#Перевірка кешу та його загрузка якщо він є
     cached_concerts = await redis_client.get("catalog_concerts")
 
     if cached_concerts:
         raw_data = json.loads(cached_concerts)
     else:
-        # Якщо кешу немає — йдемо в базу даних PostgreSQL
         result = await db.execute(select(Concert).order_by(Concert.date_time))
         concerts = result.scalars().all()
 
-        # Серіалізуємо дані в примітивні типи для JSON/Redis
+        # Перетворюємро дані для бд
         raw_data = [
             {
                 "id": c.id,
@@ -45,20 +43,17 @@ async def list_concerts(request: Request, genre: str = None, db: AsyncSession = 
                 "base_price": float(c.base_price)
             } for c in concerts
         ]
-        # Записуємо структуру в кеш на 60 секунд
         await redis_client.setex("catalog_concerts", 60, json.dumps(raw_data))
 
-    # КРИТИЧНИЙ ФІКС: Парсимо ISO-рядки назад в об'єкти datetime для Jinja2
     concerts_data = []
     for item in raw_data:
         concert_dict = item.copy()
         if concert_dict.get("date_time"):
-            # Очищаємо від можливих маркерів часових поясів
             dt_str = concert_dict["date_time"].replace("Z", "")
             concert_dict["date_time"] = datetime.fromisoformat(dt_str)
         concerts_data.append(concert_dict)
 
-    # Логіка фільтрації за жанрами (Rock / Pop)
+    # Фільтрація за двома жанрами(proof of concept тому тільки 2)
     if genre:
         concerts_data = [c for c in concerts_data if c.get("genre") == genre]
 

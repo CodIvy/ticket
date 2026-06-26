@@ -5,11 +5,11 @@
 {% block content %}
 <article style="background: #252525; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
     <header style="border-bottom: 1px solid #333333; padding-bottom: 15px; margin-bottom: 25px;">
-        <h2 style="margin: 0 0 10px 0;">👋 Вітаємо в особистому кабінеті!</h2>
+        <h2 style="margin: 0 0 10px 0;"> Вітаємо в особистому кабінеті!</h2>
         <p style="color: #aaaaaa; margin: 0;">Ваш акаунт: <strong style="color: #ffffff;">{{ user.email }}</strong></p>
     </header>
 
-    <h3 style="margin-bottom: 20px;">📜 Історія ваших покупок</h3>
+    <h3 style="margin-bottom: 20px;"> Історія ваших покупок</h3>
 
     {% if history %}
         <div style="overflow-x: auto;">
@@ -29,7 +29,7 @@
                         <td style="padding: 12px; color: #aaaaaa;">#{{ item.order_id }}</td>
                         <td style="padding: 12px;">
                             <strong style="color: #ffffff;">{{ item.concert_title }}</strong><br>
-                            <span style="font-size: 0.85rem; color: #aaaaaa;">🎙️ {{ item.artist }} — 📅 {{ item.date }}</span>
+                            <span style="font-size: 0.85rem; color: #aaaaaa;"> {{ item.artist }} — {{ item.date }}</span>
                         </td>
                         <td style="padding: 12px;">
                             <span style="background: #6200ee; color: #ffffff; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: bold;">

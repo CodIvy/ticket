@@ -8,14 +8,14 @@ DATABASE_URL = os.getenv(
     "postgresql+asyncpg://ticket_user:1234@127.0.0.1:5432/ticket_service_db"
 )
 REDIS_URL = os.getenv("REDIS_URL", "redis://127.0.0.1:6379")
-
+#Increased pool of conections for testing
 engine = create_async_engine(
     DATABASE_URL,
-    echo=False,  # Вимкнено логування SQL-запитів, оскільки воно сильно гальмує I/O під час стрес-тестів
-    pool_size=50,  # Збільшено базовий пул під велику кількість паралельних з'єднань k6
-    max_overflow=50,  # Загальний ліміт з'єднань доведено до 100
-    pool_timeout=30.0,  # Зменшено таймаут, щоб швидше звільняти застряглі запити
-    pool_pre_ping=True  # Автоматична перевірка «життя» з'єднання перед використанням
+    echo=False,
+    pool_size=50,
+    max_overflow=50,
+    pool_timeout=30.0,
+    pool_pre_ping=True
 )
 
 async_session = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
